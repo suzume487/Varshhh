@@ -1,1 +1,3 @@
-langchain-google-genai
+streamlit langchain-google-genai
+
+

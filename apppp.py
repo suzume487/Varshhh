@@ -1,37 +1,41 @@
-import os
-os.environ["GOOGLE_API_KEY"]=st.secrets["GOOGLE_API_KEY"]
 import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
-# Initialize LLM
+import os
+os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+
+# Initialize the LLM
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+
+# Set up Streamlit page
+st.set_page_config(page_title="Gemini Chatbot", layout="centered")
+st.title("🤖 Gemini Chatbot with Memory")
 
 # Initialize chat history in session state
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = [SystemMessage(content="You are a helpful assistant.")]
+    st.session_state.chat_history = [
+        SystemMessage(content="You are a helpful assistant.")
+    ]
 
-# App title
-st.title("💬 Gemini Chatbot with LangChain")
-st.markdown("Type your message below to chat with the assistant.")
-
-# Input field
-user_input = st.text_input("You:", key="input")
-
-# If the user enters a message
-if user_input:
-    if user_input.lower() == "quit":
-        st.stop()
-
-    st.session_state.chat_history.append(HumanMessage(content=user_input))
-    with st.spinner("Thinking..."):
-        result = llm.invoke(st.session_state.chat_history)
-    st.session_state.chat_history.append(AIMessage(content=result.content))
-    st.session_state.input = ""  # Clear input box
-
-# Display the conversation
+# Display past messages
 for msg in st.session_state.chat_history:
     if isinstance(msg, HumanMessage):
-        st.markdown(f"**You:** {msg.content}")
+        st.chat_message("user").markdown(msg.content)
     elif isinstance(msg, AIMessage):
-        st.markdown(f"**AI:** {msg.content}")
+        st.chat_message("assistant").markdown(msg.content)
+
+# User input
+user_input = st.chat_input("Say something...")
+if user_input:
+    # Append user message
+    st.session_state.chat_history.append(HumanMessage(content=user_input))
+    st.chat_message("user").markdown(user_input)
+
+    # Get response from Gemini
+    result = llm.invoke(chat_history)
+    response = result.content
+
+    # Append AI response
+    st.session_state.chat_history.append(AIMessage(content=response))
+    st.chat_message("assistant").markdown(response)
